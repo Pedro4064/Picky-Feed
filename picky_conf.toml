@@ -1,0 +1,18 @@
+[credentials]
+user_name = "admin"
+user_password = "potato"
+
+[qbittorrent_config]
+host = "localhost"
+port = "8080"
+
+[[rss_rules]]
+rss_name = "shonenjump"
+download_directory = ""
+    [[rss_rules.file_rules]]
+    name = "SPYxFAMILY"
+    file_regex = ".*"
+
+    [[rss_rules.file_rules]]
+    name = "Kaguya-Sama"
+    file_regex = ".*"
