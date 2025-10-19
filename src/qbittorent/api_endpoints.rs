@@ -1,0 +1,1 @@
+pub const LOGIN:&'static str = "/api/v2/auth/login";
