@@ -9,5 +9,6 @@ fn main() {
     let conf_loader = ConfigLoader::new(config_path);
     let configuration = conf_loader.parse_config();
     println!("{:?}", configuration);
-    qbittorent::QBitTorrentClient::new("admin".to_string(), "fzGYz4Z9M".to_string(), "http://localhost:8080".to_string());
+    let mut torrent = qbittorent::QBitTorrentClient::new("admin".to_string(), "fzGYz4Z9M".to_string(), "http://localhost:8080".to_string());
+    torrent.auth_user();
 }
