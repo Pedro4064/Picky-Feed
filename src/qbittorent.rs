@@ -1,8 +1,13 @@
 pub mod api_endpoints;
 pub mod api_errors;
+pub mod rss_feed;
 
+use std::collections::HashMap;
+
+use rss_feed::{Article, Feed};
 use api_errors::QbitApiError;
-use reqwest::{header::HeaderMap, Client};
+use reqwest::header::HeaderMap;
+
 
 pub struct QBitTorrentClient {
     user_name: String,
@@ -12,7 +17,7 @@ pub struct QBitTorrentClient {
 }
 
 impl QBitTorrentClient {
-    pub fn get_session_cookie(&self) -> Result<String, QbitApiError> {
+    fn get_session_cookie(&self) -> Result<String, QbitApiError> {
         let mut headers = HeaderMap::new();
         headers.insert("Referer", self.service_host.parse().unwrap());
         headers.insert(
@@ -58,9 +63,48 @@ impl QBitTorrentClient {
     }
 
     pub fn auth_user(&mut self) -> Result<(), QbitApiError> {
-        let cookie = QBitTorrentClient::get_session_cookie(self);
-        println!("{:?}", cookie);
+        let cookie = self.get_session_cookie();
+        println!("Cookie - {:?}", cookie);
+        //TODO! Fix this
         self.user_cookies = cookie?;
         Ok(())
+    }
+
+    pub fn get_rss_items(&self) -> HashMap<String, Vec<Article>>{
+        let mut headers = HeaderMap::new();
+        headers.insert("Referer", self.service_host.parse().unwrap());
+        headers.insert(
+            "Content-Type",
+            "application/x-www-form-urlencoded".parse().unwrap(),
+        );
+        headers.insert(
+            "Cookie",
+            format!("SID={}", self.user_cookies).parse().unwrap()
+        );
+
+        let data_flag = "True".to_string();
+        let mut params = std::collections::HashMap::new();
+        params.insert("username", &self.user_name);
+        params.insert("password", &self.user_password);
+        params.insert("withData", &data_flag);
+
+        let request = reqwest::blocking::Client::new();
+        let res = request
+            .post(format!("{}{}", self.service_host, api_endpoints::RSS_ITEMS))
+            .headers(headers)
+            .form(&params)
+            .send();
+
+        match res {
+            Ok(data) => 
+                {
+                    let json_data = data.json::<HashMap<String, Feed>>().unwrap();
+                    println!("Pudim - {:?}", json_data);
+                    // println!("Potato - {:?}", data.text());
+                },
+            Err(_) => todo!()
+        }
+
+        todo!();
     }
 }
