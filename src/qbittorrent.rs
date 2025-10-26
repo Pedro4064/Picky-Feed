@@ -4,10 +4,9 @@ pub mod rss_feed;
 
 use std::collections::HashMap;
 
-use rss_feed::{Article, Feed};
 use api_errors::QbitApiError;
-use reqwest::header::HeaderMap;
-
+use reqwest::{header::HeaderMap, StatusCode};
+use rss_feed::{Article, Feed};
 
 pub struct QBitTorrentClient {
     user_name: String,
@@ -40,7 +39,7 @@ impl QBitTorrentClient {
             .form(&params)
             .send();
 
-        // TODO! Do a better check of the response because it can return an 
+        // TODO! Do a better check of the response because it can return an
         // error message in the response rather than a proper error or status code
         let res = match res {
             Ok(response) => response,
@@ -53,6 +52,21 @@ impl QBitTorrentClient {
         };
 
         cookie_result
+    }
+
+    fn get_api_header(&self) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        headers.insert("Referer", self.service_host.parse().unwrap());
+        headers.insert(
+            "Content-Type",
+            "application/x-www-form-urlencoded".parse().unwrap(),
+        );
+        headers.insert(
+            "Cookie",
+            format!("SID={}", self.user_cookies).parse().unwrap(),
+        );
+
+        headers
     }
 
     pub fn new(user_name: String, user_password: String, service_host: String) -> Self {
@@ -70,21 +84,11 @@ impl QBitTorrentClient {
         Ok(())
     }
 
-    pub fn get_rss_items(&self) -> Result<HashMap<String, Feed>, QbitApiError>{
-        let mut headers = HeaderMap::new();
-        headers.insert("Referer", self.service_host.parse().unwrap());
-        headers.insert(
-            "Content-Type",
-            "application/x-www-form-urlencoded".parse().unwrap(),
-        );
-        headers.insert(
-            "Cookie",
-            format!("SID={}", self.user_cookies).parse().unwrap()
-        );
+    pub fn get_rss_items(&self) -> Result<HashMap<String, Feed>, QbitApiError> {
+        let headers = self.get_api_header();
 
-        let data_flag = "True".to_string();
         let mut params = std::collections::HashMap::new();
-        params.insert("withData", &data_flag);
+        params.insert("withData", "True");
 
         let request = reqwest::blocking::Client::new();
         let res = request
@@ -95,12 +99,40 @@ impl QBitTorrentClient {
 
         // TODO! Better Logging
         match res {
-            Ok(data) => 
-                {
-                    data.json::<HashMap<String, Feed>>().map_err(|_| QbitApiError::FailedRssFeedCheck)
-                },
-            Err(_) => Err(QbitApiError::FailedEndpoint(api_endpoints::RSS_ITEMS))
+            Ok(data) => data
+                .json::<HashMap<String, Feed>>()
+                .map_err(|_| QbitApiError::FailedRssFeedCheck),
+            Err(_) => Err(QbitApiError::FailedEndpoint(api_endpoints::RSS_ITEMS)),
         }
+    }
 
+    pub fn upload_torrent_from_url(&self, url: String) -> Result<(), QbitApiError> {
+        let headers = self.get_api_header();
+
+        let mut params = HashMap::new();
+        params.insert("urls", url);
+        params.insert("paused", "True".to_string());
+
+        let request = reqwest::blocking::Client::new();
+        let res = request
+            .post(format!(
+                "{}{}",
+                self.service_host,
+                api_endpoints::TORRENT_UPLOAD
+            ))
+            .headers(headers)
+            .form(&params)
+            .send();
+
+        match res {
+            Ok(response) => {
+                if response.status() == StatusCode::OK {
+                    Ok(())
+                } else {
+                    Err(QbitApiError::FailedTorrentUpload)
+                }
+            }
+            Err(_) => Err(QbitApiError::FailedEndpoint(api_endpoints::TORRENT_UPLOAD)),
+        }
     }
 }
