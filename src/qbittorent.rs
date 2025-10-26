@@ -66,12 +66,11 @@ impl QBitTorrentClient {
 
     pub fn auth_user(&mut self) -> Result<(), QbitApiError> {
         let cookie = self.get_session_cookie();
-        println!("Cookie - {:?}", cookie);
         self.user_cookies = cookie?;
         Ok(())
     }
 
-    pub fn get_rss_items(&self) -> HashMap<String, Vec<Article>>{
+    pub fn get_rss_items(&self) -> Result<HashMap<String, Feed>, QbitApiError>{
         let mut headers = HeaderMap::new();
         headers.insert("Referer", self.service_host.parse().unwrap());
         headers.insert(
@@ -94,16 +93,14 @@ impl QBitTorrentClient {
             .form(&params)
             .send();
 
+        // TODO! Better Logging
         match res {
             Ok(data) => 
                 {
-                    let json_data = data.json::<HashMap<String, Feed>>().unwrap();
-                    println!("Pudim - {:?}", json_data);
-                    // println!("Potato - {:?}", data.text());
+                    data.json::<HashMap<String, Feed>>().map_err(|_| QbitApiError::FailedRssFeedCheck)
                 },
-            Err(_) => todo!()
+            Err(_) => Err(QbitApiError::FailedEndpoint(api_endpoints::RSS_ITEMS))
         }
 
-        todo!();
     }
 }

@@ -11,6 +11,7 @@ fn main() {
     println!("{:?}", configuration);
     // let mut torrent = qbittorent::QBitTorrentClient::new("admin".to_string(), "torrent".to_string(), "http://localhost:8080".to_string());
     let mut torrent = qbittorent::QBitTorrentClient::new(configuration.credentials.user_name, configuration.credentials.user_password, "http://localhost:8080".to_string());
-    let _ = torrent.auth_user();
-    torrent.get_rss_items();
+    torrent.auth_user().expect("Error in user auth, unable to proceed");
+    let rss_feeds = torrent.get_rss_items().expect("Error parsing rss feeds, unable to proceed");
+    println!("{:?}", rss_feeds);
 }
