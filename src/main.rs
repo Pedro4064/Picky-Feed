@@ -11,6 +11,6 @@ fn main() {
     println!("{:?}", configuration);
     // let mut torrent = qbittorent::QBitTorrentClient::new("admin".to_string(), "torrent".to_string(), "http://localhost:8080".to_string());
     let mut torrent = qbittorent::QBitTorrentClient::new(configuration.credentials.user_name, configuration.credentials.user_password, "http://localhost:8080".to_string());
-    torrent.auth_user();
+    let _ = torrent.auth_user();
     torrent.get_rss_items();
 }

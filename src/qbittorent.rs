@@ -40,6 +40,8 @@ impl QBitTorrentClient {
             .form(&params)
             .send();
 
+        // TODO! Do a better check of the response because it can return an 
+        // error message in the response rather than a proper error or status code
         let res = match res {
             Ok(response) => response,
             Err(_) => return Err(QbitApiError::FailedEndpoint(api_endpoints::LOGIN)),
@@ -65,7 +67,6 @@ impl QBitTorrentClient {
     pub fn auth_user(&mut self) -> Result<(), QbitApiError> {
         let cookie = self.get_session_cookie();
         println!("Cookie - {:?}", cookie);
-        //TODO! Fix this
         self.user_cookies = cookie?;
         Ok(())
     }
@@ -84,8 +85,6 @@ impl QBitTorrentClient {
 
         let data_flag = "True".to_string();
         let mut params = std::collections::HashMap::new();
-        params.insert("username", &self.user_name);
-        params.insert("password", &self.user_password);
         params.insert("withData", &data_flag);
 
         let request = reqwest::blocking::Client::new();
