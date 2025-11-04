@@ -37,8 +37,16 @@ fn main() {
         let rss_unread_items: Vec<&Article> = rss_feed_items
             .articles
             .iter()
-            .filter(|item| item.is_read)
+            .filter(|item| !item.is_read)
             .collect();
+
+        for articles in &rss_unread_items {
+            match torrent.upload_torrent_from_url(&articles.torrent_url){
+                Ok(_) => (),
+                Err(err) => eprintln!("{}",err)
+            }
+            break;
+        }
         println!("{:?}", rss_unread_items);
     }
 }

@@ -1,11 +1,11 @@
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub enum QbitApiError {
+pub enum QbitApiError{
     FailedEndpoint(&'static str),
     FailedAuth,
     FailedRssFeedCheck,
-    FailedTorrentUpload,
+    FailedTorrentUpload(String),
 }
 
 
@@ -15,7 +15,7 @@ impl fmt::Display for QbitApiError{
             QbitApiError::FailedEndpoint(endpoint) => write!(f, "Failed the request to {}",endpoint),
             QbitApiError::FailedAuth => write!(f, "Failed to Authenticate user"),
             QbitApiError::FailedRssFeedCheck => write!(f, "Failed to parse server response for RSS feed items"),
-            QbitApiError::FailedTorrentUpload => write!(f, "Failed to upload torrent to client"),
+            QbitApiError::FailedTorrentUpload(url) => write!(f, "Failed to upload torrent to client: {}", url),
         }
 
     }

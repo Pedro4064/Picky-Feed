@@ -106,12 +106,13 @@ impl QBitTorrentClient {
         }
     }
 
-    pub fn upload_torrent_from_url(&self, url: String) -> Result<(), QbitApiError> {
+    pub fn upload_torrent_from_url(&self, url: &String) -> Result<(), QbitApiError> {
         let headers = self.get_api_header();
 
+        let paused_flag = String::from("True");
         let mut params = HashMap::new();
         params.insert("urls", url);
-        params.insert("paused", "True".to_string());
+        params.insert("paused", &paused_flag);
 
         let request = reqwest::blocking::Client::new();
         let res = request
@@ -129,7 +130,7 @@ impl QBitTorrentClient {
                 if response.status() == StatusCode::OK {
                     Ok(())
                 } else {
-                    Err(QbitApiError::FailedTorrentUpload)
+                    Err(QbitApiError::FailedTorrentUpload(url.clone()))
                 }
             }
             Err(_) => Err(QbitApiError::FailedEndpoint(api_endpoints::TORRENT_UPLOAD)),
